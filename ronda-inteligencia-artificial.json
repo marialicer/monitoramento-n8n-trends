@@ -1,0 +1,613 @@
+{
+  "name": "ronda inteligência artificial",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "let output = [];\n\nfor (const item of items) {\n\n  // ignora queries sem resultado\n  if (!item.json.related_queries) continue;\n\n  const related = item.json.related_queries;\n\n  // TOP: pula 1ª, pega 2ª; pula 3ª, pega 4ª...\n  const top = (related.top || [])\n    .slice(0, 14)\n    .filter((_, index) => index % 2 === 1)\n    .map(q => ({\n      tipo: \"top\",\n      termo: q.query,\n      interesse: q.extracted_value ?? q.value,\n      origem: item.json.search_parameters.q\n    }));\n\n  // RISING normal\n  const rising = (related.rising || [])\n    .slice(0, 7)\n    .map(q => ({\n      tipo: \"rising\",\n      termo: q.query,\n      interesse: q.extracted_value ?? q.value,\n      origem: item.json.search_parameters.q\n    }));\n\n  output.push(...top, ...rising);\n}\n\nreturn output;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        272
+      ],
+      "id": "526dddef-a4ed-475a-b28c-2d4fb6750906",
+      "name": "tratamento palavras-chave"
+    },
+    {
+      "parameters": {
+        "content": "## Google Trends",
+        "height": 736,
+        "width": 448,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        288,
+        -224
+      ],
+      "typeVersion": 1,
+      "id": "90386d64-5eea-4602-87d1-e8d47877a104",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "03be5786-0abb-4f0d-9371-b630a3442b5c",
+              "name": "urls",
+              "value": "[\"https://news.google.com/rss/topics/CAAqKggKIiRDQkFTRlFvSUwyMHZNRGRqTVhZU0JYQjBMVUpTR2dKQ1VpZ0FQAQ?hl=pt-BR&gl=BR&ceid=BR%3Apt-419\", \"https://news.google.com/rss/search?q=cnn+brasil&hl=pt-BR&gl=BR&ceid=BR:pt-419\", \"https://news.google.com/rss/search?q=g1&hl=pt-BR&gl=BR&ceid=BR:pt-419\"]",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1536,
+        -160
+      ],
+      "id": "58f956a0-0322-4db3-bd3a-26744548faea",
+      "name": "lista de rss"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "urls",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1744,
+        -128
+      ],
+      "id": "55472ccb-3f80-44ed-b3be-655b42de8de6",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1936,
+        -128
+      ],
+      "id": "dba92390-eab5-46b3-98f4-45abcb2bd13f",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.urls }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        1968,
+        128
+      ],
+      "id": "d9329691-948a-4fbe-86dd-d0facbbc2575",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3831eba5-ddc2-4403-a55d-9207f8098d6b",
+              "name": "titulo",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "b8abee21-943f-427b-b455-1c39fc80e229",
+              "name": "link",
+              "value": "={{ $json.link }}",
+              "type": "string"
+            },
+            {
+              "id": "5f8b665a-2bd4-4148-ab7e-2b464be27162",
+              "name": "pubDate",
+              "value": "={{ $json.pubDate }}",
+              "type": "string"
+            },
+            {
+              "id": "04c2c300-6384-4eda-92a1-a6b073121332",
+              "name": "resumo",
+              "value": "={{ $json.contentSnippet }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2192,
+        -144
+      ],
+      "id": "49e77d76-8d49-44ad-b25f-178b35781a67",
+      "name": "dados do rss"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        2208,
+        112
+      ],
+      "id": "e2d29dcd-c9eb-4af1-a330-96e5109eb99c",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "content": "## Matérias Inteligência Artificial",
+        "height": 736,
+        "width": 1088
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1440,
+        -224
+      ],
+      "typeVersion": 1,
+      "id": "452c001a-adc4-465c-86f9-59fabd015141",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Pessoas também perguntam ",
+        "height": 736,
+        "width": 672,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        752,
+        -224
+      ],
+      "typeVersion": 1,
+      "id": "4421e82c-e3c1-4e92-9ac6-f21fb82f07fb",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1152,
+        736
+      ],
+      "id": "d7a69c53-5cf4-4848-a4c0-fa9a2ddd0034",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "content": "## Envia e-mail\n**Double click** to edit me. [Guide](https://docs.n8n.io/workflows/components/sticky-notes/)",
+        "height": 464,
+        "width": 2240,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        288,
+        528
+      ],
+      "typeVersion": 1,
+      "id": "06c7ddb7-132b-4877-b9c4-2d1b9a44054d",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "sendTo": "seu-email@exemplo.com",
+        "subject": "={{ $json.assunto }}",
+        "message": "={{ $json.corpoFinal }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1872,
+        752
+      ],
+      "id": "da714f60-ac04-4136-9cbe-3cefe361fb89",
+      "name": "Send a message",
+      "webhookId": "a0ef8a51-d7fb-476c-b1b2-a8c2b55ff427",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "AQI1ECI7OxSPuwpO",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. TRAVA DE SEGURANÇA\nif ($runIndex > 0) return [];\n\n// 2. CAPTURA CONSOLIDADA\nconst noticias = [];\nconst paa = [];\nconst trends = [];\n\nconst todosOsItens = $input.all();\n\ntodosOsItens.forEach(item => {\n  const d = item.json;\n\n  // Notícias (percorre array interno)\n  if (d.noticias && Array.isArray(d.noticias)) {\n    d.noticias.forEach(n => noticias.push(n));\n  }\n\n  // Perguntas PAA (percorre array interno)\n  if (d.paa && Array.isArray(d.paa)) {\n    d.paa.forEach(q => paa.push({ question: q }));\n  }\n\n  // Trends (percorre array interno)\n  if (d.trends && Array.isArray(d.trends)) {\n    d.trends.forEach(t => trends.push({ termo: t }));\n  }\n});\n\n// 3. FUNÇÕES DE FORMATAÇÃO\nconst formatarLista = (lista) => {\n  if (!lista.length) return \"<p style='color:#666;'>Sem dados disponíveis no momento.</p>\";\n  return `<ul style=\"padding-left: 15px; line-height:1.6; margin:0;\">\n    ${lista.map(i => `<li style=\"margin-bottom:6px; padding:4px 8px; background:#fee2e2; border-radius:5px; display:inline-block; margin-right:6px;\">${i.termo || i.question}</li>`).join(\"\")}\n  </ul>`;\n};\n\nconst formatarNoticias = (lista) => {\n  if (!lista.length) return \"<p style='color:#666;'>Sem notícias recentes sobre IA.</p>\";\n  return lista.map(n => `\n    <div style=\"border:1px solid #fca5a5; border-radius:10px; padding:12px; margin-bottom:12px; background:#fef2f2; box-shadow:0 3px 8px rgba(0,0,0,0.08); transition: all 0.2s;\">\n      <strong style=\"font-size:16px; color:#991b1b;\">${n.titulo}</strong><br>\n      <a href=\"${n.link}\" target=\"_blank\" style=\"color:#dc2626; text-decoration:none; font-size:14px;\">Ver fonte original 🔗</a>\n    </div>\n  `).join(\"\");\n};\n\n// Ajuste para fuso de Brasília\nconst agora = new Date();\nconst horaBrasil = agora.getUTCHours() - 3;\nconst horaAjustada = (horaBrasil + 24) % 24;\n\n// Determinar o período\nlet periodo = \"\";\nif (horaAjustada >= 1 && horaAjustada < 12) periodo = \"Manhã\";\nelse if (horaAjustada >= 12 && horaAjustada < 17) periodo = \"Tarde\";\nelse periodo = \"Noite\";\n\n// DEFINIR dataHoje para usar no cabeçalho e assunto\nconst dataHoje = agora.toLocaleDateString('pt-BR', {\n  weekday: 'long',\n  day: '2-digit',\n  month: '2-digit'\n});\n\n// ------------------------\n// CAPTURA O RESUMO ESTRUTURADO\n// ------------------------\nlet resumoEstruturado = \"\";\nif (todosOsItens[0] && todosOsItens[0].json.resumoEstruturado) {\n  resumoEstruturado = todosOsItens[0].json.resumoEstruturado;\n}\n\n// 5. MONTAGEM DO HTML\nconst corpoFinal = `\n<div style=\"background-color: #f4f7fb; padding: 20px 0; font-family: 'Helvetica Neue', Arial, sans-serif;\">\n  <div style=\"max-width: 700px; margin:auto; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 6px 15px rgba(0,0,0,0.1); border:1px solid #fecaca;\">\n    \n    <!-- Header -->\n    <div style=\"\n      background-color:#dc2626;\n      background:linear-gradient(90deg,#991b1b,#ef4444);\n      padding:30px;\n      text-align:center;\n      border-bottom:4px solid #991b1b;\n    \">\n      <h1 style=\"margin:0; font-size:26px; letter-spacing:-0.5px; color:#fff;\">\n        Ronda IA – ${dataHoje} • ${periodo}\n      </h1>\n    </div>\n\n    <div style=\"padding: 30px;\">\n      \n      <!-- Intro -->\n      <p style=\"font-size:15px; color:#333; line-height:1.6; margin-bottom:25px;\">\n        Olá, equipe! Este é o resumo sobre IA da ${periodo.toLowerCase()}, reunindo tendências de busca, dúvidas do público e notícias recentes sobre o assunto.\n      </p>\n\n      <!-- Resumo Estruturado -->\n      <div style=\"margin-bottom:30px;\">\n        <h2 style=\"font-size:16px; font-weight:700; color:#991b1b; margin-bottom:12px;\">\n          Destaques\n        </h2>\n        <p style=\"font-size:15px; color:#333; line-height:1.6; margin-bottom:0;\">\n          ${resumoEstruturado}\n        </p>\n      </div>\n\n      <!-- Trends -->\n      <div style=\"margin-bottom:30px;\">\n        <h2 style=\"font-size:16px; font-weight:700; color:#991b1b; margin-bottom:12px;\">\n          Google Trends\n        </h2>\n        ${formatarLista(trends)}\n      </div>\n\n      <!-- PAA -->\n      <div style=\"margin-bottom:30px;\">\n        <h2 style=\"font-size:16px; font-weight:700; color:#991b1b; margin-bottom:12px;\">\n          Pessoas também perguntam\n        </h2>\n        ${formatarLista(paa)}\n      </div>\n\n      <!-- Notícias -->\n      <div style=\"margin-bottom:30px;\">\n        <h2 style=\"font-size:16px; font-weight:700; color:#991b1b; margin-bottom:12px;\">\n          Notícias sobre IA\n        </h2>\n        ${formatarNoticias(noticias)}\n      </div>\n    </div>\n\n    <!-- Footer -->\n    <div style=\"background:#fee2e2; padding:20px; text-align:center; border-top:1px solid #fca5a5; border-radius:0 0 12px 12px;\">\n      <p style=\"font-size:12px; color:#991b1b; margin:0;\">\n        Este resumo é gerado automaticamente com base em tendências e notícias recentes sobre IA.\n      </p>\n    </div>\n\n  </div>\n</div>\n`;\n\n// 6. RETORNO FINAL\nreturn [{\n  json: {\n    corpoFinal,\n    assunto: `Ronda IA 2026 - ${dataHoje} - ${periodo}`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1632,
+        752
+      ],
+      "id": "3a820074-836d-49b4-bf0c-204d2d445832",
+      "name": "manda email"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. TRAVA DE SEGURANÇA: roda apenas uma vez\nif ($runIndex > 0) return [];\n\n// 2. Inicializa arrays\nconst noticias = [];\nconst question = [];\nconst trends = [];\n\n// 3. Separa os dados do Merge\nconst todosOsItens = $input.all();\ntodosOsItens.forEach(item => {\n    const d = item.json;\n    if (d.titulo) noticias.push(d);\n    else if (d.question) question.push(d);\n    else if (d.termo) trends.push(d);\n});\n\n// 4. Seleciona as principais tendências (até 3 termos)\nconst topTrends = trends.slice(0,3).map(t => t.termo).join(', ');\n\n// 5. Seleciona as principais perguntas (até 3)\nconst topPAA = question.slice(0,3).map(q => q.question).join(', ');\n\n// 6. Seleciona as 3 notícias mais relevantes (título apenas) e remove o sufixo do site\nconst topNoticias = noticias.slice(0,3).map(n => {\n    let tituloLimpo = n.titulo;\n    // Remove sufixo após \" - \", se existir\n    if(tituloLimpo.includes(' - ')){\n        tituloLimpo = tituloLimpo.split(' - ')[0].trim();\n    }\n    return tituloLimpo;\n});\n\n// 7. Monta o parágrafo estruturado com highlights\nlet resumoEstruturado = `No topo do interesse do público pelo assunto aparecem ${topTrends.split(', ').map(t => `<strong>${t}</strong>`).join(', ')}. `;\nif(topPAA) resumoEstruturado += `Enquanto isso, as dúvidas mais recorrentes se concentram em ${topPAA.split(', ').map(q => `<strong>${q}</strong>`).join(', ')}. `;\nresumoEstruturado += ` Seguem abaixo as buscas e oportunidades detalhadas:`;\n\n// 8. Retorno para o próximo nó (e-mail)\nreturn [{\n    json: {\n        resumoEstruturado,\n        trends: trends.map(t => t.termo),   // mantém array completo\n        paa: question.map(q => q.question),       // mantém array completo\n        noticias: noticias.map(n => {\n            let tituloLimpo = n.titulo;\n            if(tituloLimpo.includes(' - ')) tituloLimpo = tituloLimpo.split(' - ')[0].trim();\n            return {\n                titulo: tituloLimpo,\n                link: n.link\n            };\n        })\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1392,
+        752
+      ],
+      "id": "62c51348-9c2f-4292-abc4-4ca4b99b25c6",
+      "name": "resumo estruturado"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $input.item.json.data || [];\nconst MAX_AGE_HOURS = 24;\nconst IA_REGEX = /\\b(ia|inteligência\\s+artificial|artificial\\s+intelligence|ai|openai|chatgpt|gpt-?4|gpt-?5|gemini|google\\s+ai|claude|anthropic|copilot|microsoft\\s+copilot|deepseek|grok|xai|llm|modelo\\s+de\\s+linguagem|modelo\\s+generativo|ia\\s+generativa|generative\\s+ai|agente\\s+de\\s+ia|ai\\s+agent|stable\\s+diffusion|midjourney|runway|sora)\\b/i;\nconst stopwords = ['do', 'da', 'de', 'dos', 'das', 'em', 'no', 'na', 'o', 'a', 'e', 'com', 'para', 'sobre', 'ao', 'à', 'as', 'os'];\n\n// Função para limpar HTML e normalizar texto\nconst limparTexto = texto => {\n  if (!texto) return '';\n  return texto\n    .replace(/<[^>]*>/g, '')\n    .replace(/&#39;/g, \"'\")\n    .replace(/&quot;/g, '\"')\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>')\n    .replace(/\\s+/g, ' ')\n    .trim();\n};\n\n// Função para extrair palavras-chave relevantes\nconst extrairPalavrasChave = texto => {\n  if (!texto) return [];\n  return [...new Set(\n    texto.toLowerCase()\n      .replace(/[^a-z0-9\\s]/gi, '')\n      .split(/\\s+/)\n      .filter(w => w.length > 3 && !stopwords.includes(w))\n  )];\n};\n\n// Função para gerar themeKey robusto (nomes próprios ou palavras-chave)\nconst gerarThemeKey = (titulo, resumo) => {\n  const nomes = titulo.match(/\\b[A-Z][a-z]+ [A-Z][a-z]+\\b/g) || [];\n  if (nomes.length) return nomes.join(' ');\n  const palavras = extrairPalavrasChave(titulo).slice(0, 5);\n  if (palavras.length) return palavras.join(' ');\n  return (titulo + resumo).toLowerCase().slice(0, 30);\n};\n\n\n// PROCESSAMENTO\nconst finalSelection = [];\nconst seenThemes = new Set();\n\ninputData.forEach(d => {\n  const titulo = limparTexto(d.titulo || d.title || '');\n  const resumo = limparTexto(d.resumo || d.description || '');\n  const link = d.link || '';\n\n  if (!titulo) return;\n\n  const tituloLower = titulo.toLowerCase();\n\n  if (!IA_REGEX.test(tituloLower)) return;\n\n  const dataPublicacao = new Date(d.isoDate || d.pubDate || d.date || Date.now()).getTime();\n  const ageHours = (Date.now() - dataPublicacao) / (1000 * 60 * 60);\n  if (ageHours > MAX_AGE_HOURS) return;\n\n  const themeKey = gerarThemeKey(titulo, resumo);\n  if (seenThemes.has(themeKey)) return;\n\n  // Score combina recência + click trigger\n  let score = MAX_AGE_HOURS - ageHours;\n\n  finalSelection.push({ titulo, resumo, link, themeKey, dataPublicacao, score });\n  seenThemes.add(themeKey);\n});\n\n// Ordena por score (engajamento + recência)\nfinalSelection.sort((a, b) => b.score - a.score || b.dataPublicacao - a.dataPublicacao);\n\n// Retorna até 7 notícias\nreturn finalSelection.slice(0, 7).map(item => ({\n  json: { titulo: item.titulo, link: item.link }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        320
+      ],
+      "id": "8d984cf0-cad0-4a75-ba80-4c2c517d5c00",
+      "name": "filtragem"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const paa = item.json.related_questions || [];\n  return paa.map(q => ({\n    json: {\n      question: q.question\n    }\n  }));\n}).flat();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1184,
+        272
+      ],
+      "id": "eff8208d-fc70-4384-85c4-2b43c4fbe8a1",
+      "name": "tratamento related questions"
+    },
+    {
+      "parameters": {
+        "operation": "google_trends",
+        "q": "inteligência artificial",
+        "additionalFields": {
+          "geo": "BR",
+          "data_type": "RELATED_QUERIES",
+          "date": "now 1-H"
+        },
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-serpapi.serpApi",
+      "typeVersion": 1,
+      "position": [
+        384,
+        0
+      ],
+      "id": "58498a6a-0df5-4466-b4d4-c689e797bc7f",
+      "name": "google_trends",
+      "credentials": {
+        "serpApi": {
+          "id": "NPtfUqFAZGCRD5pA",
+          "name": "SerpApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "q": "que inteligência artificial",
+        "additionalFields": {
+          "gl": "br",
+          "hl": "pt-br",
+          "num": "10"
+        },
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-serpapi.serpApi",
+      "typeVersion": 1,
+      "position": [
+        912,
+        48
+      ],
+      "id": "06614ae6-a7d6-4657-943a-87e175d3474a",
+      "name": "related_questions",
+      "credentials": {
+        "serpApi": {
+          "id": "NPtfUqFAZGCRD5pA",
+          "name": "SerpApi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -160
+      ],
+      "id": "0235ab3c-a610-4ad6-ba25-e02e2e155c25",
+      "name": "When clicking ‘Execute workflow’"
+    }
+  ],
+  "pinData": {
+    "google_trends": [
+      {
+        "json": {
+          "search_metadata": {
+            "id": "6a442a0c18dc936cb6c769fc",
+            "status": "Success",
+            "json_endpoint": "https://serpapi.com/searches/jHXE2HKVSxIrZNuB0x_4Kg/6a442a0c18dc936cb6c769fc.json",
+            "created_at": "2026-06-30 20:41:48 UTC",
+            "processed_at": "2026-06-30 20:41:48 UTC",
+            "google_trends_url": "https://trends.google.com/trends/embed/explore/RELATED_QUERIES?hl=en&tz=420&req=%7B%22comparisonItem%22%3A%5B%7B%22keyword%22%3A%22intelig%C3%AAncia+artificial%22%2C%22geo%22%3A%22BR%22%2C%22time%22%3A%22now+1-H%22%7D%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D",
+            "raw_html_file": "https://serpapi.com/searches/jHXE2HKVSxIrZNuB0x_4Kg/6a442a0c18dc936cb6c769fc.html",
+            "prettify_html_file": "https://serpapi.com/searches/jHXE2HKVSxIrZNuB0x_4Kg/6a442a0c18dc936cb6c769fc.prettify",
+            "total_time_taken": 1.17
+          },
+          "search_parameters": {
+            "engine": "google_trends",
+            "q": "inteligência artificial",
+            "hl": "en",
+            "geo": "BR",
+            "date": "now 1-H",
+            "tz": "420",
+            "data_type": "RELATED_QUERIES"
+          },
+          "related_queries": {
+            "rising": [
+              {
+                "query": "dola inteligência artificial",
+                "value": "+110%",
+                "extracted_value": 110,
+                "link": "https://trends.google.com/trends/explore?q=dola+intelig%C3%AAncia+artificial&date=now+1-H&geo=BR",
+                "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=now+1-H&engine=google_trends&geo=BR&hl=en&q=dola+intelig%C3%AAncia+artificial&tz=420"
+              },
+              {
+                "query": "ia",
+                "value": "+90%",
+                "extracted_value": 90,
+                "link": "https://trends.google.com/trends/explore?q=ia&date=now+1-H&geo=BR",
+                "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=now+1-H&engine=google_trends&geo=BR&hl=en&q=ia&tz=420"
+              }
+            ],
+            "top": [
+              {
+                "query": "ia",
+                "value": "100",
+                "extracted_value": 100,
+                "link": "https://trends.google.com/trends/explore?q=ia&date=now+1-H&geo=BR",
+                "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=now+1-H&engine=google_trends&geo=BR&hl=en&q=ia&tz=420"
+              },
+              {
+                "query": "dola inteligência artificial",
+                "value": "34",
+                "extracted_value": 34,
+                "link": "https://trends.google.com/trends/explore?q=dola+intelig%C3%AAncia+artificial&date=now+1-H&geo=BR",
+                "serpapi_link": "https://serpapi.com/search.json?data_type=RELATED_QUERIES&date=now+1-H&engine=google_trends&geo=BR&hl=en&q=dola+intelig%C3%AAncia+artificial&tz=420"
+              }
+            ]
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "lista de rss": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "dados do rss",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "dados do rss": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "filtragem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tratamento palavras-chave": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "resumo estruturado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "manda email": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "resumo estruturado": {
+      "main": [
+        [
+          {
+            "node": "manda email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filtragem": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tratamento related questions": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "google_trends": {
+      "main": [
+        [
+          {
+            "node": "tratamento palavras-chave",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "related_questions": {
+      "main": [
+        [
+          {
+            "node": "tratamento related questions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "lista de rss",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "google_trends",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "related_questions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "dea624c8-be81-4640-b7d6-893ec4308259",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5d220081b9e1306c3d1aa67fbb1928018331d67af39b3d24123519bf0756e1b1"
+  },
+  "nodeGroups": [],
+  "id": "paYOZcmqXAETQxGn",
+  "tags": []
+}

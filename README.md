@@ -1,0 +1,70 @@
+# Ronda IA - Monitoramento Automatizado de Pauta
+
+Pipeline de automação construído em **n8n** que monitora diariamente o interesse público e a cobertura jornalística em torno do tema "Inteligência Artificial" no Brasil, consolidando tudo em um resumo executivo enviado por e-mail.
+
+![Demo da execução](./demo-n8n.gif)
+
+## O problema
+
+Acompanhar manualmente o que está sendo buscado, perguntado e noticiado sobre um tema específico é um processo repetitivo que normalmente cai em um de dois extremos: ou alguém faz essa ronda todo dia perdendo tempo de análise mais estratégica, ou ninguém faz e oportunidades de pauta passam despercebidas.
+
+## A solução
+
+Um workflow que roda sob demanda (ou agendado) e:
+
+1. Consulta o **Google Trends** (via SerpApi) para identificar termos de busca em alta relacionados a "inteligência artificial" na última hora
+2. Busca as **perguntas mais frequentes do público** sobre o tema (People Also Ask)
+3. Lê feeds **RSS** de veículos de notícia (G1, CNN Brasil, entre outros) filtrando matérias relevantes ao tema
+4. Agrega, limpa e filtra os três conjuntos de dados
+5. Monta um **resumo estruturado em HTML** com os destaques do período
+6. Envia o resumo por **e-mail** via Gmail
+
+## Resultado
+
+![Demo do resultado](./email-resultado.gif)
+
+## Arquitetura
+
+```mermaid
+flowchart TD
+    A[Manual Trigger] --> B[Google Trends - SerpApi]
+    A --> C[Related Questions - SerpApi]
+    A --> D[Lista de RSS]
+    
+    B --> E[Tratamento palavras-chave]
+    C --> F[Tratamento related questions]
+    D --> G[Split Out] --> H[Loop Over Items] --> I[RSS Read] --> J[Dados do RSS] --> K[Aggregate]
+    
+    E --> L[Merge]
+    F --> L
+    K --> L
+    
+    L --> M[Resumo estruturado]
+    M --> N[Filtragem]
+    N --> O[Manda e-mail]
+    O --> P[Gmail - Send a message]
+```
+
+## Decisões técnicas
+
+- **n8n em vez de Airflow** para este caso: o workflow é leve, orientado a uma execução pontual/agendada simples, e se beneficia da integração nativa com Gmail/RSS/APIs via nós prontos, não justifica a complexidade de DAGs do Airflow, que reservo para pipelines batch mais robustos ([veja meu projeto com Airflow](#)).
+- **Nós de Code (JavaScript) em vez de nó de IA generativa** para montar o resumo: a lógica de seleção dos top termos/perguntas/notícias é determinística (regras de negócio claras), então optei por não introduzir uma chamada de LLM onde não havia ambiguidade a resolver. Isso reduz custo, latência e pontos de falha.
+- **Merge antes do resumo**: os três ramos (trends, perguntas, notícias) rodam em paralelo e só se sincronizam no nó Merge, evitando que uma chamada de API mais lenta bloqueie as outras.
+- **Trava de segurança no nó de resumo** (`if ($runIndex > 0) return []`): evita reprocessamento duplicado em re-execuções dentro do mesmo loop.
+
+## Como rodar
+
+1. Importe o arquivo [`ronda_inteligencia_artificial.json`](./ronda_inteligencia_artificial.json) no seu n8n
+2. Configure as credenciais:
+   - **SerpApi** (Google Trends + Related Questions) — [serpapi.com](https://serpapi.com)
+   - **Gmail OAuth2** (envio do resumo)
+3. Ajuste o e-mail de destino no nó `Send a message`
+4. Execute manualmente ou configure um Schedule Trigger no lugar do Manual Trigger
+
+## Stack
+
+`n8n` · `SerpApi (Google Trends API)` · `RSS` · `Gmail API` · `JavaScript`
+
+---
+
+Projeto autoral desenvolvido por [Alice Rocha](https://marialicer.github.io) como parte do portfólio de automação de dados, aplicando experiência de monitoramento de audiência e SEO da rotina em mídia digital.
