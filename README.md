@@ -4,11 +4,11 @@ Pipeline de automação construído em **n8n** que monitora diariamente o intere
 
 ![Demo da execução](./demo-n8n.gif)
 
-## O problema
+## Problema
 
-Acompanhar manualmente o que está sendo buscado, perguntado e noticiado sobre um tema específico é um processo repetitivo que normalmente cai em um de dois extremos: ou alguém faz essa ronda todo dia perdendo tempo de análise mais estratégica, ou ninguém faz e oportunidades de pauta passam despercebidas.
+O monitoramento manual de buscas, notícias e menções sobre um tema específico é uma atividade recorrente e de baixa escalabilidade. Esse processo consome tempo que poderia ser destinado a análises estratégicas ou, quando não realizado de forma sistemática, pode resultar na perda de tendências e oportunidades relevantes.
 
-## A solução
+## Solução
 
 Um workflow que roda sob demanda (ou agendado) e:
 
@@ -47,16 +47,16 @@ flowchart TD
 
 ## Decisões técnicas
 
-- **n8n em vez de Airflow** para este caso: o workflow é leve, orientado a uma execução pontual/agendada simples, e se beneficia da integração nativa com Gmail/RSS/APIs via nós prontos, não justifica a complexidade de DAGs do Airflow, que reservo para pipelines batch mais robustos ([veja meu projeto com Airflow](#)).
+- **n8n em vez de Airflow** para este caso: o workflow é leve, orientado a uma execução pontual/agendada simples, e se beneficia da integração nativa com Gmail/RSS/APIs via nós prontos, não justifica a complexidade de DAGs do Airflow, que reservo para pipelines batch mais robustos ([veja meu projeto com Airflow](https://github.com/marialicer/macro-pipeline)).
 - **Nós de Code (JavaScript) em vez de nó de IA generativa** para montar o resumo: a lógica de seleção dos top termos/perguntas/notícias é determinística (regras de negócio claras), então optei por não introduzir uma chamada de LLM onde não havia ambiguidade a resolver. Isso reduz custo, latência e pontos de falha.
 - **Merge antes do resumo**: os três ramos (trends, perguntas, notícias) rodam em paralelo e só se sincronizam no nó Merge, evitando que uma chamada de API mais lenta bloqueie as outras.
 - **Trava de segurança no nó de resumo** (`if ($runIndex > 0) return []`): evita reprocessamento duplicado em re-execuções dentro do mesmo loop.
 
 ## Como rodar
 
-1. Importe o arquivo [`ronda_inteligencia_artificial.json`](./ronda_inteligencia_artificial.json) no seu n8n
+1. Importe o arquivo `ronda_inteligencia_artificial.json` no seu n8n
 2. Configure as credenciais:
-   - **SerpApi** (Google Trends + Related Questions) — [serpapi.com](https://serpapi.com)
+   - **SerpApi** (Google Trends + Related Questions) - [serpapi.com](https://serpapi.com)
    - **Gmail OAuth2** (envio do resumo)
 3. Ajuste o e-mail de destino no nó `Send a message`
 4. Execute manualmente ou configure um Schedule Trigger no lugar do Manual Trigger
@@ -67,4 +67,7 @@ flowchart TD
 
 ---
 
-Projeto autoral desenvolvido por [Alice Rocha](https://marialicer.github.io) como parte do portfólio de automação de dados, aplicando experiência de monitoramento de audiência e SEO da rotina em mídia digital.
+## Autora
+Maria Alice Rocha <br>
+Data Analyst, especialista em Analytics e BI pela PUC Minas<br>
+[Github](https://github.com/marialicer)·[Portfólio](https://marialicer.github.io)
